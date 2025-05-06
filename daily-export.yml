@@ -2,7 +2,7 @@ name: Daily Export
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # 07:00 WIB
+    - cron: '0 0 * * *'  # Jam 07:00 WIB (UTC+0)
   workflow_dispatch:
 
 jobs:
@@ -21,8 +21,8 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Install Playwright browsers
-        run: npx playwright install
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
 
       - name: Inject .env from Secrets
         run: |
