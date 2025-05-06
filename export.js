@@ -1,5 +1,5 @@
-const puppeteer = require("puppeteer");
-const Tesseract = require("tesseract.js");
+import { chromium } from 'playwright';
+import 'dotenv/config';
 
 (async () => {
   const browser = await puppeteer.launch({
