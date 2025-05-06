@@ -2,28 +2,32 @@ name: Daily Export
 
 on:
   schedule:
-    - cron: '0 0 * * *' # UTC 00:00 = WIB 07:00
-  workflow_dispatch: # bisa dijalankan manual juga
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
 jobs:
   export:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Clone repo
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: 18
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: npm install
 
-      - name: Set environment
+      - name: Install Playwright browsers
+        run: npx playwright install
+
+      - name: Inject .env from Secrets
         run: |
           echo "BIGSELLER_EMAIL=${{ secrets.BIGSELLER_EMAIL }}" >> .env
           echo "BIGSELLER_PASSWORD=${{ secrets.BIGSELLER_PASSWORD }}" >> .env
 
-      - name: Run export
+      - name: Run Export Script
         run: npm start
