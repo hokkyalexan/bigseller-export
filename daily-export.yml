@@ -1,0 +1,29 @@
+name: Daily Export
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # UTC 00:00 = WIB 07:00
+  workflow_dispatch: # bisa dijalankan manual juga
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Set environment
+        run: |
+          echo "BIGSELLER_EMAIL=${{ secrets.BIGSELLER_EMAIL }}" >> .env
+          echo "BIGSELLER_PASSWORD=${{ secrets.BIGSELLER_PASSWORD }}" >> .env
+
+      - name: Run export
+        run: npm start
