@@ -2,33 +2,40 @@ import { chromium } from 'playwright';
 import 'dotenv/config';
 
 (async () => {
-  const browser = await puppeteer.launch({
+  const browser = await chromium.launch({
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
-  });
-  const page = await browser.newPage();
-  await page.goto("https://www.bigseller.com");
-
-  await page.type("input[placeholder='Phone/Email']", process.env.EMAIL);
-  await page.type("input[placeholder='Password']", process.env.PASSWORD);
-
-  const captchaInput = await page.$("input[placeholder='Enter the graphic code']");
-  const box = await captchaInput.boundingBox();
-  await page.screenshot({
-    path: "captcha.png",
-    clip: { x: box.x, y: box.y, width: box.width, height: box.height }
+    args: ['--no-sandbox']
   });
 
-  const { data: { text } } = await Tesseract.recognize("captcha.png", "eng");
-  const captcha = text.replace(/\s/g, "");
-  await page.type("input[placeholder='Enter the graphic code']", captcha);
+  const context = await browser.newContext({ acceptDownloads: true });
+  const page = await context.newPage();
 
-  await Promise.all([
-    page.waitForNavigation({ waitUntil: "networkidle2" }),
-    page.click("button:has-text('Log In')")
+  // 1. Login
+  await page.goto('https://www.bigseller.com/');
+  await page.fill('input[name="email"]', process.env.BIGSELLER_EMAIL);
+  await page.fill('input[name="password"]', process.env.BIGSELLER_PASSWORD);
+  await page.click('button[type="submit"]');
+  await page.waitForNavigation();
+
+  // 2. Buka halaman menunggu dicetak
+  await page.goto('https://www.bigseller.com/web/order/index.htm?status=processing');
+  await page.waitForTimeout(6000);
+
+  // 3. Ekspor
+  await page.click('text=Ekspor');
+  await page.click('text=Ekspor Semua Pesanan');
+  await page.click('text=Template Standar');
+  await page.click('text=Siap Kirim 2');
+  await page.click('button:has-text("Ekspor")');
+
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('text=Unduh')
   ]);
 
-  console.log("✅ Login sukses!");
+  const path = `/tmp/bigseller-${Date.now()}.xlsx`;
+  await download.saveAs(path);
+  console.log(`✅ File berhasil disimpan: ${path}`);
 
   await browser.close();
 })();
